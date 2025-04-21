@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-size: 16px;
+  }
+
+  body {
+    @apply antialiased font-kufi; /* Set Noto Kufi Arabic as default font */
+  }
+
+  /* Improve focus styles */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-500;
+  }
+
+  /* Skip to main content link */
+  .skip-to-main {
+    @apply sr-only focus:not-sr-only focus:fixed focus:top-4 focus:right-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-contrast-high-light focus:text-contrast-text-primary focus:rounded-lg focus:shadow-lg;
+  }
+
+  /* Arabic Font Support */
+  @font-face {
+    font-family: 'Noto Kufi Arabic';
+    src: url('https://fonts.googleapis.com/css2?family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap');
+  }
+
+  /* Default text direction and font for Arabic */
+  html {
+    direction: rtl;
+  }
+
+  /* Adjust line height for Arabic text */
+  body {
+    line-height: 1.8;
+    letter-spacing: 0;
+  }
+
+  /* LTR overrides for English content */
+  [dir='ltr'] {
+    direction: ltr;
+    font-family: system-ui, -apple-system, sans-serif;
+    line-height: 1.5;
+    letter-spacing: normal;
+  }
+
+  /* Large Font Size Mode */
+  html.text-large {
+    font-size: 18px;
+  }
+
+  html.text-large h1 { @apply text-3xl; }
+  html.text-large h2 { @apply text-2xl; }
+  html.text-large h3 { @apply text-xl; }
+  html.text-large p { @apply text-lg; }
+  html.text-large button { @apply text-lg; }
+  html.text-large input { @apply text-lg; }
+  html.text-large textarea { @apply text-lg; }
+  html.text-large label { @apply text-base; }
+
+  /* High Contrast Mode */
+  html.high-contrast {
+    /* Text Colors */
+    --text-primary: #000000;
+    --text-secondary: #1a1a1a;
+    --text-tertiary: #333333;
+    --text-inverse: #ffffff;
+
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f0f0f0;
+    --bg-tertiary: #e0e0e0;
+    --bg-inverse: #000000;
+
+    /* Interactive Colors */
+    --interactive-primary: #0000ee;
+    --interactive-hover: #0000cc;
+    --interactive-focus: #0000cc;
+
+    /* Border Colors */
+    --border-primary: #000000;
+    --border-secondary: #333333;
+  }
+
+  html.high-contrast.dark {
+    /* Dark Mode High Contrast */
+    --text-primary: #ffffff;
+    --text-secondary: #f0f0f0;
+    --text-tertiary: #e0e0e0;
+    --text-inverse: #000000;
+
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #333333;
+    --bg-inverse: #ffffff;
+
+    --interactive-primary: #66b3ff;
+    --interactive-hover: #99ccff;
+    --interactive-focus: #99ccff;
+
+    --border-primary: #ffffff;
+    --border-secondary: #cccccc;
+  }
+
+  html.high-contrast {
+    /* Apply High Contrast Colors */
+    @apply text-[var(--text-primary)] bg-[var(--bg-primary)];
+  }
+
+  html.high-contrast button {
+    @apply text-[var(--text-inverse)] bg-[var(--interactive-primary)] hover:bg-[var(--interactive-hover)] focus:ring-[var(--interactive-focus)];
+  }
+
+  html.high-contrast a {
+    @apply text-[var(--interactive-primary)] hover:text-[var(--interactive-hover)] focus:ring-[var(--interactive-focus)];
+  }
+
+  html.high-contrast input,
+  html.high-contrast textarea {
+    @apply text-[var(--text-primary)] bg-[var(--bg-secondary)] border-[var(--border-primary)];
+  }
+
+  html.high-contrast :focus {
+    @apply ring-2 ring-[var(--interactive-focus)] outline-none;
+  }
+}
+
+/* Rest of your existing CSS... */
