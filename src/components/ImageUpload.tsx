@@ -1,7 +1,12 @@
+// src/components/ImageUpload.tsx
+
 import React, { useState, useRef } from 'react';
-import { Image as ImageIcon, X, Upload } from 'lucide-react';
+import { X, Upload } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../contexts/LanguageContext';
+import { uploadImage } from '../services/image'; // ✅ استيراد الصح
+import { toast } from 'react-hot-toast';
+import { CustomToast } from './Toast'; // ✅ تأكد ان اسم الفايل والكمبوننت صح
 
 interface ImageUploadProps {
   onImageSelect: (file: File) => void;
@@ -25,24 +30,22 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(currentImage || null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
   const { dir } = useLanguage();
 
-  const handleFileSelect = (file: File) => {
-    // Validate file type
+  const handleFileSelect = async (file: File) => {
     if (!acceptedTypes.includes(file.type)) {
       setError(t('upload.invalidType'));
       return;
     }
 
-    // Validate file size
     if (file.size > maxSizeMB * 1024 * 1024) {
       setError(t('upload.fileTooLarge', { size: maxSizeMB }));
       return;
     }
 
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
@@ -50,7 +53,32 @@ export function ImageUpload({
     };
     reader.readAsDataURL(file);
 
-    onImageSelect(file);
+    try {
+      setIsUploading(true);
+      await uploadImage(file);
+      toast.custom((t) => (
+        <CustomToast
+          message="تم رفع الصورة بنجاح ✅"
+          type="success"
+          onClose={() => toast.dismiss(t.id)}
+        />
+      ));
+      
+      onImageSelect(file);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast.custom((t) => (
+        <CustomToast
+          message="تم رفع الصورة بنجاح ✅"
+          type="success"
+          onClose={() => toast.dismiss(t.id)}
+        />
+      ));
+      
+      setPreview(null);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,6 +126,7 @@ export function ImageUpload({
         onChange={handleInputChange}
         className="sr-only"
         aria-label={t('upload.selectImage')}
+        disabled={isUploading}
       />
 
       {preview ? (
@@ -145,7 +174,7 @@ export function ImageUpload({
           <div className={`text-center ${compact ? 'p-2' : 'p-4'}`}>
             <Upload className={`${compact ? 'w-6 h-6' : 'w-8 h-8'} text-gray-400 mx-auto mb-2`} />
             <p className={`text-sm text-gray-500 dark:text-gray-400 ${compact ? 'text-xs' : ''}`}>
-              {t('upload.clickToUpload')}
+              {isUploading ? t('upload.uploading') : t('upload.clickToUpload')}
             </p>
             {!compact && (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">

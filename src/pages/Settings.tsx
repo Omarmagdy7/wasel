@@ -9,6 +9,11 @@ import PrivacySettings from './settings/PrivacySettings';
 import AccessibilitySettings from './settings/AccessibilitySettings';
 import ThemeSettings from './settings/ThemeSettings';
 import LanguageSettings from './settings/LanguageSettings';
+import LogoutButton from '../components/logoutbutton';
+
+// وتحطه جوه الصفحة
+<LogoutButton />
+
 
 function Settings() {
   const { dir } = useLanguage();

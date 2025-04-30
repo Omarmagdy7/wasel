@@ -1,6 +1,5 @@
-// src/components/UsersList.tsx
-
 import React, { useEffect, useState } from 'react';
+import { getAllUsers } from '../services/user'; // ربط بالسيرفيس
 
 interface ReturnUsersDto {
   id: string;
@@ -16,18 +15,10 @@ const UsersList: React.FC = () => {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/User', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        if (!response.ok) {
-          throw new Error('فشل في جلب المستخدمين');
-        }
-        const data = await response.json();
+        const data = await getAllUsers(); // استدعاء من service
         setUsers(data);
       } catch (error) {
-        console.error(error);
+        console.error('Error fetching users:', error);
       } finally {
         setLoading(false);
       }
@@ -41,13 +32,13 @@ const UsersList: React.FC = () => {
   }
 
   return (
-    <div>
-      <h2>قائمة المستخدمين</h2>
-      <ul>
+    <div className="max-w-2xl mx-auto mt-6">
+      <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-white">قائمة المستخدمين</h2>
+      <ul className="space-y-4">
         {users.map((user) => (
-          <li key={user.id}>
-            <p>الاسم: {user.name}</p>
-            <p>البريد الإلكتروني: {user.email}</p>
+          <li key={user.id} className="bg-white dark:bg-gray-800 shadow-md p-4 rounded-lg">
+            <p className="text-gray-900 dark:text-white">الاسم: {user.name}</p>
+            <p className="text-gray-600 dark:text-gray-300">البريد الإلكتروني: {user.email}</p>
             {/* أضف المزيد من التفاصيل حسب الحاجة */}
           </li>
         ))}

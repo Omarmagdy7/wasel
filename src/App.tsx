@@ -9,14 +9,8 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { QueryProvider } from './providers/QueryProvider';
 import { AppRoutes } from './AppRoutes';
-import FollowButton from './components/followbutton';
-import FollowersList from './components/followerslist';
-import ImageUpload from './components/imageuploud';
-import ImageDelete from './components/imagedelete';
-import Notifications from './components/notification';
-import Likes from './components/likebutton';
-import UsersList from './components/userlist';
-import UserProfile from './components/userprofile';
+import { Toaster } from 'react-hot-toast';
+import { ErrorBoundary } from './components/ErrorBoundary'; // ✓ ErrorBoundary مضاف
 
 function AppContent() {
   const location = useLocation();
@@ -37,16 +31,8 @@ function AppContent() {
       <main className={`${shouldShowNavbar ? `${dir === 'rtl' ? 'md:mr-64' : 'md:ml-64'} pt-4 pb-20 md:pb-4` : ''}`}>
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/likes" element={<Likes />} />
-            <Route path="/users" element={<UsersList />} />
-            <Route path="/profile" element={<UserProfile />} />
             <Route path="*" element={<AppRoutes />} />
           </Routes>
-          <FollowButton userId="123" />
-          <FollowersList />
-          <ImageUpload />
-          <ImageDelete />
         </Suspense>
       </main>
     </div>
@@ -60,7 +46,10 @@ function App() {
         <LanguageProvider>
           <AccessibilityProvider>
             <AuthProvider>
-              <AppContent />
+              <ErrorBoundary>
+                <AppContent />
+              </ErrorBoundary>
+              <Toaster position="top-center" reverseOrder={false} />
             </AuthProvider>
           </AccessibilityProvider>
         </LanguageProvider>

@@ -1,13 +1,13 @@
 // src/components/Notifications.tsx
 
 import React, { useEffect, useState } from 'react';
-import { getNotifications } from '../services/notification';
+import { getNotifications } from '../services/notification'; // تأكد من أن المسار صحيح
+import { toast } from 'react-hot-toast';
 
 interface Notification {
   id: string;
   message: string;
   createdAt: string;
-  // أضف الحقول الأخرى حسب الحاجة
 }
 
 const Notifications: React.FC = () => {
@@ -17,9 +17,12 @@ const Notifications: React.FC = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
+        // جلب الإشعارات من الـ API
         const data = await getNotifications();
         setNotifications(data);
       } catch (error) {
+        // التعامل مع الأخطاء
+        toast.error('حدث خطأ أثناء جلب الإشعارات');
         console.error('حدث خطأ أثناء جلب الإشعارات:', error);
       } finally {
         setLoading(false);
@@ -36,14 +39,18 @@ const Notifications: React.FC = () => {
   return (
     <div>
       <h2>الإشعارات</h2>
-      <ul>
-        {notifications.map((notification) => (
-          <li key={notification.id}>
-            <p>{notification.message}</p>
-            <small>{new Date(notification.createdAt).toLocaleString()}</small>
-          </li>
-        ))}
-      </ul>
+      {notifications.length === 0 ? (
+        <p>لا توجد إشعارات جديدة.</p>
+      ) : (
+        <ul>
+          {notifications.map((notification) => (
+            <li key={notification.id}>
+              <p>{notification.message}</p>
+              <small>{new Date(notification.createdAt).toLocaleString()}</small>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 };

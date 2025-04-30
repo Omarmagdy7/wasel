@@ -1,7 +1,8 @@
 // src/context/AuthContext.tsx
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { UserProfile } from '../lib/api/types';
+import type { UserProfile } from '../lib/api/types'; // تأكد من أن UserProfile يحتوي على name و username
 import { loginUser, logoutUser, getUserProfile } from '../services/auth';
 
 interface AuthContextType {
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // قم بتحميل بيانات المستخدم عندما يتم تحميل الـ AuthContext
   useEffect(() => {
     const initializeAuth = async () => {
       try {
@@ -43,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initializeAuth();
   }, []);
 
+  // تسجيل الدخول
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
@@ -52,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('Profile after login:', profile);
       setUser(profile);
       setIsAuthenticated(true);
-      navigate('/');
+      navigate('/'); // انتقل إلى الصفحة الرئيسية بعد تسجيل الدخول
     } catch (error) {
       console.error('Login failed:', error);
       throw error;
@@ -61,13 +64,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // تسجيل الخروج
   const logout = async () => {
     try {
       setIsLoading(true);
-      await logoutUser();
-      setUser(null);
-      setIsAuthenticated(false);
-      navigate('/login');
+      await logoutUser(); // استدعاء API السيرفر لو محتاج
+      localStorage.removeItem('token'); // مسح التوكن من localStorage
+      setUser(null); // مسح بيانات اليوزر من الكونتكست
+      setIsAuthenticated(false); // تغيير الحالة
+      navigate('/login'); // توجيه المستخدم لصفحة تسجيل الدخول
     } catch (error) {
       console.error('Logout failed:', error);
     } finally {
@@ -75,6 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // تحديث بيانات المستخدم
   const updateUser = (data: Partial<UserProfile>) => {
     if (user) {
       const updatedUser = { ...user, ...data };
@@ -82,12 +88,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // تسجيل محاولات التنمر
   const incrementBullyingAttempts = () => {
-    // منطق زيادة عدد محاولات التنمر
     console.log('تم تسجيل محاولة تنمر');
     // يمكنك هنا تنفيذ منطق إضافي مثل تحديث الحالة أو إرسال طلب إلى الخادم
   };
 
+  // القيمة التي ستتم مشاركتها عبر الـ Context
   const value: AuthContextType = {
     isAuthenticated,
     isLoading,
@@ -105,6 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// هوك مخصص للوصول إلى بيانات المستخدم
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

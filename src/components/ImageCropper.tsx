@@ -1,22 +1,24 @@
+// src/components/ImageCropper.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
-import { X, Check, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 
 interface ImageCropperProps {
   image: string;
-  onCrop: (croppedImage: string) => void;
+  onCrop: (croppedBlob: Blob, previewUrl: string) => void;
   onCancel: () => void;
   aspectRatio?: number;
   circular?: boolean;
 }
 
-export function ImageCropper({ 
-  image, 
-  onCrop, 
-  onCancel, 
-  aspectRatio = 1, 
-  circular = false 
+export function ImageCropper({
+  image,
+  onCrop,
+  onCancel,
+  aspectRatio = 1,
+  circular = false,
 }: ImageCropperProps) {
   const { dir } = useLanguage();
   const { t } = useTranslation();
@@ -29,14 +31,13 @@ export function ImageCropper({
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Center the image initially
     if (imageRef.current && containerRef.current) {
       const container = containerRef.current.getBoundingClientRect();
       const img = imageRef.current.getBoundingClientRect();
-      
+
       setPosition({
         x: (container.width - img.width) / 2,
-        y: (container.height - img.height) / 2
+        y: (container.height - img.height) / 2,
       });
     }
   }, [image]);
@@ -45,7 +46,7 @@ export function ImageCropper({
     setIsDragging(true);
     setDragStart({
       x: e.clientX - position.x,
-      y: e.clientY - position.y
+      y: e.clientY - position.y,
     });
   };
 
@@ -53,21 +54,19 @@ export function ImageCropper({
     if (isDragging) {
       setPosition({
         x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y
+        y: e.clientY - dragStart.y,
       });
     }
   };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+  const handleMouseUp = () => setIsDragging(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     setIsDragging(true);
     setDragStart({
       x: touch.clientX - position.x,
-      y: touch.clientY - position.y
+      y: touch.clientY - position.y,
     });
   };
 
@@ -76,44 +75,30 @@ export function ImageCropper({
       const touch = e.touches[0];
       setPosition({
         x: touch.clientX - dragStart.x,
-        y: touch.clientY - dragStart.y
+        y: touch.clientY - dragStart.y,
       });
     }
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
-  };
+  const handleTouchEnd = () => setIsDragging(false);
 
-  const handleZoomIn = () => {
-    setScale(prev => Math.min(prev + 0.1, 3));
-  };
-
-  const handleZoomOut = () => {
-    setScale(prev => Math.max(prev - 0.1, 0.5));
-  };
-
-  const handleRotate = () => {
-    setRotation(prev => (prev + 90) % 360);
-  };
+  const handleZoomIn = () => setScale((prev) => Math.min(prev + 0.1, 3));
+  const handleZoomOut = () => setScale((prev) => Math.max(prev - 0.1, 0.5));
+  const handleRotate = () => setRotation((prev) => (prev + 90) % 360);
 
   const handleCrop = () => {
     if (!imageRef.current || !containerRef.current) return;
 
     const canvas = document.createElement('canvas');
     const container = containerRef.current.getBoundingClientRect();
-    
-    // Set canvas size to the crop area
-    canvas.width = container.width;
-    canvas.height = container.height;
-    
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-    
-    // Clear the canvas
+
+    canvas.width = container.width;
+    canvas.height = container.height;
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    // If circular, create a circular clip
+
     if (circular) {
       ctx.beginPath();
       ctx.arc(
@@ -125,14 +110,13 @@ export function ImageCropper({
       );
       ctx.clip();
     }
-    
-    // Draw the image with transformations
+
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(scale, scale);
     ctx.translate(-canvas.width / 2, -canvas.height / 2);
-    
+
     const img = imageRef.current;
     ctx.drawImage(
       img,
@@ -141,12 +125,14 @@ export function ImageCropper({
       img.width,
       img.height
     );
-    
+
     ctx.restore();
-    
-    // Get the cropped image as a data URL
-    const croppedImage = canvas.toDataURL('image/jpeg', 0.9);
-    onCrop(croppedImage);
+
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const previewUrl = URL.createObjectURL(blob);
+      onCrop(blob, previewUrl);
+    }, 'image/jpeg', 0.9);
   };
 
   return (
@@ -164,15 +150,15 @@ export function ImageCropper({
             <X className="w-5 h-5" />
           </button>
         </div>
-        
+
         <div className="p-4">
-          <div 
+          <div
             ref={containerRef}
             className={`relative overflow-hidden ${circular ? 'rounded-full' : 'rounded-lg'} bg-gray-100 dark:bg-gray-700 mb-4`}
-            style={{ 
-              width: '100%', 
+            style={{
+              width: '100%',
               height: aspectRatio === 1 ? '300px' : '200px',
-              aspectRatio: aspectRatio
+              aspectRatio: aspectRatio,
             }}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -190,47 +176,29 @@ export function ImageCropper({
               style={{
                 transform: `translate(${position.x}px, ${position.y}px) scale(${scale}) rotate(${rotation}deg)`,
                 transformOrigin: 'center',
-                cursor: isDragging ? 'grabbing' : 'grab'
+                cursor: isDragging ? 'grabbing' : 'grab',
               }}
-              draggable="false"
+              draggable={false}
             />
           </div>
-          
-          <div className="flex justify-center space-x-4 mb-4">
-            <button
-              onClick={handleZoomOut}
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              aria-label={t('profile.zoomOut')}
-            >
+
+          <div className="flex justify-center gap-4 mb-4">
+            <button onClick={handleZoomOut} className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
               <ZoomOut className="w-5 h-5" />
             </button>
-            <button
-              onClick={handleZoomIn}
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              aria-label={t('profile.zoomIn')}
-            >
+            <button onClick={handleZoomIn} className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
               <ZoomIn className="w-5 h-5" />
             </button>
-            <button
-              onClick={handleRotate}
-              className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              aria-label={t('profile.rotate')}
-            >
+            <button onClick={handleRotate} className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600">
               <RotateCcw className="w-5 h-5" />
             </button>
           </div>
-          
-          <div className={`flex ${dir === 'rtl' ? 'justify-start' : 'justify-end'} space-x-3 ${dir === 'rtl' ? 'space-x-reverse' : ''}`}>
-            <button
-              onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
+
+          <div className={`flex ${dir === 'rtl' ? 'justify-start' : 'justify-end'} gap-3 ${dir === 'rtl' ? 'flex-row-reverse' : ''}`}>
+            <button onClick={onCancel} className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700">
               {t('common.cancel')}
             </button>
-            <button
-              onClick={handleCrop}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
+            <button onClick={handleCrop} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
               {t('profile.apply')}
             </button>
           </div>

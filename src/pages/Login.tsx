@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Volume2, Moon, Sun, Languages } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../hooks/useTheme';
 import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
+import { CustomToast } from '../components/Toast';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const navigate = useNavigate();
-  const location = useLocation();
+  
   const { login } = useAuth();
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { t } = useTranslation();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  
 
   const handleLanguageChange = () => {
     setLanguage(language === 'en' ? 'ar' : 'en');
@@ -30,20 +32,33 @@ function Login() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      setIsLoading(true);
-      await login(email, password);
-      navigate(from, { replace: true });
-    } catch (error) {
-      console.error('Login failed:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    setIsLoading(true);
+    await login(email, password);
+    toast.custom((t) => (
+      <CustomToast
+        message="تم تسجيل الدخول بنجاح ✅"
+        type="success"
+        onClose={() => toast.dismiss(t.id)}
+      />
+    ));
+    navigate('/home');
+  } catch (error) {
+    toast.custom((t) => (
+      <CustomToast
+        message="فشل تسجيل الدخول ❌"
+        type="error"
+        onClose={() => toast.dismiss(t.id)}
+      />
+    ));
+  } finally {
+    setIsLoading(false);
+  }
+};
 
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 sm:px-6 relative">
       {/* Theme and Language Controls */}
@@ -68,7 +83,6 @@ function Login() {
           )}
         </button>
       </div>
-
       {/* Main Container */}
       <div className="w-full max-w-5xl bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
         {/* Mobile Header */}
@@ -101,7 +115,6 @@ function Login() {
               </div>
             </div>
           </div>
-
           {/* Form Section */}
           <div className="w-1/2 p-12">
             <div className="max-w-md mx-auto">
@@ -147,7 +160,6 @@ function Login() {
                     />
                   </div>
                 </div>
-
                 {/* Password Field */}
                 <div>
                   <div className={`flex items-center justify-between ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
@@ -197,7 +209,6 @@ function Login() {
                     </button>
                   </div>
                 </div>
-
                 {/* Remember Me & Forgot Password */}
                 <div className={`flex items-center justify-between ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <div className={`flex items-center ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
@@ -242,7 +253,6 @@ function Login() {
                   {isLoading ? t('auth.loggingIn') : t('auth.loginButton')}
                 </button>
               </form>
-
               {/* Sign Up Link */}
               <p className={`mt-6 text-sm text-gray-600 dark:text-gray-400 
                 ${language === 'ar' ? 'text-right' : 'text-left'}`}>
@@ -268,7 +278,7 @@ function Login() {
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-6" noValidate>
-              {/* Email Field */}
+              {/* Email Field (Mobile) */}
               <div>
                 <div className={`flex items-center justify-between ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <label htmlFor="email-mobile" className={`block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2
@@ -304,8 +314,7 @@ function Login() {
                   />
                 </div>
               </div>
-
-              {/* Password Field */}
+              {/* Password Field (Mobile) */}
               <div>
                 <div className={`flex items-center justify-between ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <label htmlFor="password-mobile" className={`block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2
@@ -354,8 +363,7 @@ function Login() {
                   </button>
                 </div>
               </div>
-
-              {/* Remember Me & Forgot Password */}
+              {/* Remember Me & Forgot Password (Mobile) */}
               <div className={`flex items-center justify-between ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                 <div className={`flex items-center ${language === 'ar' ? 'flex-row-reverse' : ''}`}>
                   <input
@@ -383,7 +391,7 @@ function Login() {
                 </Link>
               </div>
 
-              {/* Submit Button */}
+              {/* Submit Button (Mobile) */}
               <button
                 type="submit"
                 disabled={isLoading}
@@ -400,7 +408,7 @@ function Login() {
               </button>
             </form>
 
-            {/* Sign Up Link */}
+            {/* Sign Up Link (Mobile) */}
             <p className={`mt-6 text-sm text-gray-600 dark:text-gray-400 
               ${language === 'ar' ? 'text-right' : 'text-left'}`}>
               {t('auth.dontHaveAccount')}{' '}

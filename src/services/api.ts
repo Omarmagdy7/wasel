@@ -13,13 +13,17 @@ export const api = axios.create({
 // Request Interceptor: إضافة التوكن إلى الهيدر
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = document.cookie
-      .split('; ')
-      .find(row => row.startsWith('jwt='))
-      ?.split('=')[1];
+    try {
+      const token = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('jwt='))
+        ?.split('=')[1];
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Error extracting token from cookies:', error);
     }
 
     return config;
@@ -29,24 +33,26 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor: التعامل مع انتهاء صلاحية التوكن
+// Response Interceptor: التعامل مع انتهاء صلاحية التوكن وأخطاء السيرفر
 api.interceptors.response.use(
   (response) => response.data,
   async (error: AxiosError) => {
     const originalRequest = error.config;
 
-    // Parse error response
     if (error.response?.data) {
       try {
         const parsedError = ErrorResponseSchema.parse(error.response.data);
         error.message = parsedError.detail || parsedError.title;
-      } catch {
-        // If error doesn't match our schema, use the original error message
+      } catch (parseError) {
+        console.warn('Error parsing error response:', parseError);
       }
     }
 
-    // Handle 401 Unauthorized
     if (error.response?.status === 401 && originalRequest) {
+      console.warn('Unauthorized access detected. Redirecting to login.');
+      // حذف التوكن من الكوكيز (لو انت عايز تنظف الكوكي كمان)
+      document.cookie = 'jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
       // Redirect to login
       window.location.href = '/login';
       return Promise.reject(error);

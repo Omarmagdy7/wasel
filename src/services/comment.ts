@@ -1,68 +1,91 @@
-// src/api/commentApi.ts
+// src/services/commentService.ts
 
 import axios from 'axios';
+
+// تأكد من تعديل رابط الـ API حسب السيرفر الخاص بك
+const API_URL = 'http://localhost:5104/api/Comment'; 
 
 interface CommentDto {
   content: string;
   postId: string;
-  parentCommentId?: string;
+  parentCommentId?: string; // من هنا نربط الردود
 }
 
-const API_URL = 'https://your-api-endpoint.com/api/comments';
+// إعداد الهيدر بالتوكن (نضيف Authorization)
+const authHeaders = () => {
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error('User not authenticated'); // في حالة عدم وجود التوكن
+  return {
+    headers: {
+      Authorization: `Bearer ${token}`, // إضافة التوكن للهيدر
+    },
+  };
+};
 
-const axiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('token')}`,
+export const CommentService = {
+  // إنشاء تعليق جديد
+  async createComment(postId: string, content: string) {
+    try {
+      const response = await axios.post(API_URL, { postId, content }, authHeaders());
+      return response.data; // إرجاع البيانات المستلمة من الـ API
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      throw new Error('Failed to create comment'); // معالج الخطأ
+    }
   },
-});
 
-export const addComment = async (commentDto: CommentDto) => {
-  try {
-    const response = await axiosInstance.post('/', commentDto);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    throw error;
+  // الرد على تعليق (نضيف رد مع parentCommentId)
+  async replyToComment(parentCommentId: string, postId: string, content: string) {
+    try {
+      const response = await axios.post(`${API_URL}/reply/${parentCommentId}`, { postId, content }, authHeaders());
+      return response.data; // إرجاع البيانات المستلمة من الـ API
+    } catch (error) {
+      console.error('Error replying to comment:', error);
+      throw new Error('Failed to reply to comment'); // معالج الخطأ
+    }
+  },
+
+  // تعديل تعليق
+  async updateComment(commentId: string, content: string) {
+    try {
+      const response = await axios.put(`${API_URL}/${commentId}`, { content }, authHeaders());
+      return response.data; // إرجاع البيانات المستلمة من الـ API
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      throw new Error('Failed to update comment'); // معالج الخطأ
+    }
+  },
+
+  // حذف تعليق
+  async deleteComment(commentId: string) {
+    try {
+      const response = await axios.delete(`${API_URL}/${commentId}`, authHeaders());
+      return response.data; // إرجاع البيانات المستلمة من الـ API
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw new Error('Failed to delete comment'); // معالج الخطأ
+    }
+  },
+
+  // جلب التعليقات الخاصة بالبوست
+  async getComments(postId: string) {
+    try {
+      const response = await axios.get(`${API_URL}/post/${postId}`, authHeaders());
+      return response.data; // إرجاع البيانات المستلمة من الـ API
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      throw new Error('Failed to fetch comments'); // معالج الخطأ
+    }
   }
 };
 
-export const addReply = async (commentDto: CommentDto, parentCommentId: string) => {
+// تعديل تعليق في `commentService.ts`
+export const updateComment = async (commentId: string, content: string) => {
   try {
-    const response = await axiosInstance.post(`/${parentCommentId}`, commentDto);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding reply:', error);
-    throw error;
-  }
-};
-
-export const updateComment = async (commentDto: CommentDto, commentId: string) => {
-  try {
-    const response = await axiosInstance.put(`/${commentId}`, commentDto);
-    return response.data;
+    const response = await axios.put(`${API_URL}/${commentId}`, { content }, authHeaders());
+    return response.data; // إرجاع البيانات المستلمة من الـ API
   } catch (error) {
     console.error('Error updating comment:', error);
-    throw error;
-  }
-};
-
-export const deleteComment = async (commentId: string) => {
-  try {
-    const response = await axiosInstance.delete(`/${commentId}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error deleting comment:', error);
-    throw error;
-  }
-};
-
-export const getComments = async (parameters: { [key: string]: any }) => {
-  try {
-    const response = await axiosInstance.get('/', { params: parameters });
-    return response.data;
-  } catch (error) {
-    console.error('Error getting comments:', error);
-    throw error;
+    throw new Error('Failed to update comment'); // معالج الخطأ
   }
 };

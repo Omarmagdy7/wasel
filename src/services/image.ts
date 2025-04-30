@@ -1,38 +1,50 @@
 // src/services/imageService.ts
 
 import axios from 'axios';
-import { ImageInputDto, Response } from '../services/imaged';
+import { Response } from '../services/imaged'; // تأكد إن النوع مطابق للـ response الحقيقي
 
-const apiUrl = 'https://your-api-url/api/image';
+const apiUrl = 'http://localhost:5104/api/Image';
 
-const uploadImage = async (image: File): Promise<Response> => {
+// ✅ رفع صورة
+export const uploadImage = async (image: File): Promise<Response> => {
   const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('User not authenticated');
+  }
+
   const formData = new FormData();
-  formData.append('image', image);
+  formData.append('Image', image); // الـ backend بـ .NET غالبًا بيستقبلها كـ "Image"
 
-  const response = await axios.post(apiUrl, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-
-  return response.data;
+  try {
+    const response = await axios.post(apiUrl, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
 };
 
-const deleteImage = async (): Promise<Response> => {
+// ✅ حذف صورة
+export const deleteImage = async (): Promise<Response> => {
   const token = localStorage.getItem('token');
+  if (!token) {
+    throw new Error('User not authenticated');
+  }
 
-  const response = await axios.delete(apiUrl, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
-
-  return response.data;
-};
-
-export default {
-  uploadImage,
-  deleteImage,
+  try {
+    const response = await axios.delete(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting image:', error);
+    throw error;
+  }
 };

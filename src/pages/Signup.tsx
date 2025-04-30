@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Volume2, HelpCircle } from 'lucide-react';
 import { useAccessibility } from '../contexts/AccessibilityContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
+import { signup } from '../services/auth'; // ✅ استدعاء دالة signup من الخدمات
+import { toast } from 'react-hot-toast';
+import { CustomToast } from '../components/Toast';
 
 function Signup() {
   const { isVisuallyImpaired } = useAccessibility();
@@ -17,6 +20,9 @@ function Signup() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const speak = (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -24,14 +30,12 @@ function Signup() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // Auto-read form instructions for visually impaired users
   useEffect(() => {
     if (isVisuallyImpaired) {
       speak(t('auth.createAccount'));
     }
   }, [isVisuallyImpaired, language, t]);
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { name?: string; email?: string; password?: string } = {};
 
@@ -62,9 +66,29 @@ function Signup() {
       return;
     }
 
-    // Handle signup logic here
-  };
+    // ✅ هنا نعمل signup الحقيقي
+    try {
+      setIsLoading(true);
+      const response = await signup({
+        username: formData.name,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.password, // ✅ نضيف confirmPassword = password
+      });
+      
 
+      if (response && response.token) {
+        localStorage.setItem('token', response.token);
+        navigate('/home');
+      } else {
+        console.error('Signup failed: No token returned.');
+      }
+    } catch (error) {
+      console.error('Signup failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const formClasses = isVisuallyImpaired
     ? 'text-xl leading-relaxed'
     : 'text-base';
@@ -89,6 +113,7 @@ function Signup() {
 
           <form id="signup-form" onSubmit={handleSubmit} noValidate className={formClasses}>
             <div className="space-y-6">
+              {/* Name Field */}
               <div>
                 <label
                   htmlFor="name"
@@ -131,7 +156,7 @@ function Signup() {
                   </p>
                 )}
               </div>
-
+              {/* Email Field */}
               <div>
                 <label
                   htmlFor="email"
@@ -172,7 +197,7 @@ function Signup() {
                   </p>
                 )}
               </div>
-
+              {/* Password Field */}
               <div>
                 <label
                   htmlFor="password"
@@ -230,18 +255,21 @@ function Signup() {
                   </p>
                 )}
               </div>
-
+              {/* Submit Button */}
               <button
                 type="submit"
-                className={`w-full py-3 px-4 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors ${
+                disabled={isLoading}
+                className={`w-full py-3 px-4 bg-primary-500 text-white rounded-lg hover:bg-primary-600 
+                  focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors ${
                   isVisuallyImpaired ? 'text-xl py-4' : ''
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
-                {t('auth.createAccount')}
+                {isLoading ? t('auth.creatingAccount') : t('auth.createAccount')}
               </button>
             </div>
           </form>
 
+          {/* Already have an account */}
           <div className="mt-6 text-center">
             <p className={`text-gray-600 dark:text-gray-400 ${isVisuallyImpaired ? 'text-lg' : 'text-sm'}`}>
               {t('auth.alreadyHaveAccount')}{' '}
@@ -253,12 +281,13 @@ function Signup() {
               </Link>
             </p>
           </div>
-
+          {/* Help Button for Visually Impaired */}
           {isVisuallyImpaired && (
             <button
               type="button"
               onClick={() => speak(t('auth.needHelp'))}
-              className={`mt-4 w-full py-2 px-4 text-gray-600 hover:text-gray-700 dark:text-gray-400 hover:underline focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg flex items-center justify-center ${
+              className={`mt-4 w-full py-2 px-4 text-gray-600 hover:text-gray-700 dark:text-gray-400 hover:underline 
+                focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-lg flex items-center justify-center ${
                 isVisuallyImpaired ? 'text-lg' : 'text-sm'
               }`}
             >
